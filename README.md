@@ -1,5 +1,10 @@
 # ADMINCES
 
+
+# UML
+
+https://lucid.app/lucidchart/e0a7d01d-98a9-4923-a6b4-7e2b63cd7d66/edit?viewport_loc=25%2C173%2C2519%2C1233%2C0_0&invitationId=inv_30c054c8-4a49-47f5-8f88-32d72b3b8ec4
+
 # Listado de Funcionalidades
 
 ## 1. Iniciar sesión (Administrador)
