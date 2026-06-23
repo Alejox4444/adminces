@@ -11,4 +11,9 @@ public class Administrador extends Usuario {
     public String getTipo() {
         return "Administrador";
     }
+
+    @Override
+    public String mostrarInfo() {
+        return "[" + getTipo() + "] " + getNombre() + " " + getApellido() + " <" + getEmail() + ">";
+    }
 }

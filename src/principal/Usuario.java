@@ -1,6 +1,6 @@
 package principal;
 
-public class Usuario {
+public abstract class Usuario {
 
     private String nombre;
     private String apellido;
@@ -22,13 +22,13 @@ public class Usuario {
     public String getPaisDeNacimiento() { return paisDeNacimiento; }
     public String getEmail() { return email; }
     public String getContrasena() { return contrasena; }
-    public String getTipo() {return "Usuario"; }
-    public String getNivelTester() {return ""; }
+
     public void setNombre(String nombre) { this.nombre = nombre; }
     public void setApellido(String apellido) { this.apellido = apellido; }
     public void setPaisDeNacimiento(String pais) { this.paisDeNacimiento = pais; }
     public void setEmail(String email) { this.email = email; }
     public void setContrasena(String contrasena) { this.contrasena = contrasena; }
 
-
+    public abstract String getTipo();
+    public abstract String mostrarInfo();
 }

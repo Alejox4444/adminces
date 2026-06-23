@@ -1,27 +1,27 @@
 package principal;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class SistemaUsuarios {
 
-    private Usuario[] usuarios = new Usuario[10];
-    private int cantidad = 0;
+    private List<Usuario> usuarios = new ArrayList<>();
 
     public SistemaUsuarios() {
-        usuarios[cantidad++] = new Administrador("Yanis", "Correa", "Uruguay",
-                "yaniscorrea@gmail.com", "12345");
-        usuarios[cantidad++] = new Administrador("Leonardo", "Perez", "Uruguay",
-                "leonardoperez@gmail.com", "12345");
-        usuarios[cantidad++] = new Tester("Nahuel", "Torena", "Uruguay",
-                "nahuel@gmail.com", "12345", "Tester Senior");
-        usuarios[cantidad++] = new Tester("Dardo", "Deleon", "Uruguay",
-                "dardo@gmail.com", "12345", "Tester Lider");
+        usuarios.add(new Administrador("Yanis", "Correa", "Uruguay",
+                "yaniscorrea@gmail.com", "12345"));
+        usuarios.add(new Administrador("Leonardo", "Perez", "Uruguay",
+                "leonardoperez@gmail.com", "12345"));
+        usuarios.add(new Tester("Nahuel", "Torena", "Uruguay",
+                "nahuel@gmail.com", "12345", "Tester Senior"));
+        usuarios.add(new Tester("Dardo", "Deleon", "Uruguay",
+                "dardo@gmail.com", "12345", "Tester Lider"));
     }
 
     public boolean existeEmail(String email) {
-        for (int i = 0; i < cantidad; i++) {
-            if (usuarios[i].getEmail().equalsIgnoreCase(email)) {
+        for (Usuario u : usuarios) {
+            if (u.getEmail().equalsIgnoreCase(email)) {
                 return true;
             }
         }
@@ -29,12 +29,12 @@ public class SistemaUsuarios {
     }
 
     public Usuario buscarPorEmail(String email) {
-        for (int i = 0; i < cantidad; i++) {
-            if (usuarios[i].getEmail().equalsIgnoreCase(email)) {
-                return usuarios[i];
+        for (Usuario u : usuarios) {
+            if (u.getEmail().equalsIgnoreCase(email)) {
+                return u;
             }
         }
-        return usuarios[0];
+        return usuarios.get(0);
     }
 
     public boolean validarCredenciales(String email, String contrasena) {
@@ -53,7 +53,6 @@ public class SistemaUsuarios {
         String contrasenaIngresada = scan.nextLine();
 
         if (validarCredenciales(emailIngresado, contrasenaIngresada)) {
-            Usuario u = buscarPorEmail(emailIngresado);
             System.out.println("Login exitoso");
         } else {
             System.out.println("Email o contraseña incorrectos.");
@@ -89,7 +88,6 @@ public class SistemaUsuarios {
             return;
         }
 
-        Usuario nuevo = null;
         boolean usuarioValido = true;
 
         while (usuarioValido) {
@@ -98,74 +96,64 @@ public class SistemaUsuarios {
 
             switch (tipo) {
                 case "1" -> {
-                    nuevo = new Administrador(nombre, apellido, pais, email, contrasena);
+                    usuarios.add(new Administrador(nombre, apellido, pais, email, contrasena));
                     usuarioValido = false;
                 }
                 case "2" -> {
-                    boolean nivelValido = true;
-                    String nivelTester = "";
-                    while (nivelValido) {
-                        System.out.println("Nivel del tester:");
-                        System.out.println("  1. Tester Junior");
-                        System.out.println("  2. Tester Senior");
-                        System.out.println("  3. Tester Líder");
-                        System.out.print("Opción: ");
-                        String opcionTester = scan.nextLine();
-
-                        switch (opcionTester) {
-                            case "1" -> { nivelTester = "Tester Junior"; nivelValido = false; }
-                            case "2" -> { nivelTester = "Tester Senior"; nivelValido = false; }
-                            case "3" -> { nivelTester = "Tester Líder";  nivelValido = false; }
-                            default  -> System.out.println("Opción no válida, intente nuevamente.");
-                        }
-                    }
-                    nuevo = new Tester(nombre, apellido, pais, email, contrasena, nivelTester);
+                    String nivelTester = elegirNivelTester(scan);
+                    usuarios.add(new Tester(nombre, apellido, pais, email, contrasena, nivelTester));
                     usuarioValido = false;
                 }
                 default -> System.out.println("Opción no válida, intente nuevamente.");
             }
         }
 
-        usuarios[cantidad++] = nuevo;
         System.out.println("Usuario registrado exitosamente");
+    }
+
+    private String elegirNivelTester(Scanner scan) {
+        boolean nivelValido = true;
+        String nivelTester = "";
+        while (nivelValido) {
+            System.out.println("Nivel del tester:");
+            System.out.println("  1. Tester Junior");
+            System.out.println("  2. Tester Senior");
+            System.out.println("  3. Tester Líder");
+            System.out.print("Opción: ");
+            String opcionTester = scan.nextLine();
+
+            switch (opcionTester) {
+                case "1" -> { nivelTester = "Tester Junior"; nivelValido = false; }
+                case "2" -> { nivelTester = "Tester Senior"; nivelValido = false; }
+                case "3" -> { nivelTester = "Tester Líder";  nivelValido = false; }
+                default  -> System.out.println("Opción no válida, intente nuevamente.");
+            }
+        }
+        return nivelTester;
     }
 
     public void listarUsuarios() {
         System.out.println("\nUsuarios registrados:");
-        Usuario[] cargados = Arrays.copyOf(usuarios, cantidad);
-        for (Usuario u : cargados) {
-            if (u.getTipo().equals("Administrador")) {
-                System.out.println("[" + u.getTipo() + "] " + u.getNombre() + " " + u.getApellido() + " <" + u.getEmail() + ">");
-            }else{
-                System.out.println("[" + u.getNivelTester() + "] " + u.getNombre() + " " + u.getApellido() + " <" + u.getEmail() + ">");
-            }
+        if (usuarios.isEmpty()) {
+            System.out.println("No hay usuarios registrados.");
+            return;
+        }
+        for (Usuario u : usuarios) {
+            System.out.println(u.mostrarInfo());
         }
     }
 
-    public static void main(String[] args) {
-        SistemaUsuarios sistema = new SistemaUsuarios();
-        Scanner scan = new Scanner(System.in);
-        boolean continuar = true;
+    public void buscarUsuario(Scanner scan) {
+        System.out.print("Ingrese el email del usuario a buscar: ");
+        String email = scan.nextLine();
 
-        while (continuar) {
-            System.out.println("\nSistema de Usuarios");
-            System.out.println("1. Login");
-            System.out.println("2. Registrarse");
-            System.out.println("3. Listar usuarios");
-            System.out.println("4. Salir");
-            System.out.print("Opción: ");
-            String opcion = scan.nextLine();
-
-            switch (opcion) {
-                case "1" -> sistema.login(scan);
-                case "2" -> sistema.registrarUsuario(scan);
-                case "3" -> sistema.listarUsuarios();
-                case "4" -> continuar = false;
-                default  -> System.out.println("Opción no válida.");
-            }
+        if (!existeEmail(email)) {
+            System.out.println("No se encontró ningún usuario con ese email.");
+        } else {
+            Usuario u = buscarPorEmail(email);
+            System.out.println("\nUsuario encontrado:");
+            System.out.println(u.mostrarInfo());
+            System.out.println("País de nacimiento: " + u.getPaisDeNacimiento());
         }
-
-        System.out.println("¡Hasta luego!");
-        scan.close();
     }
 }
