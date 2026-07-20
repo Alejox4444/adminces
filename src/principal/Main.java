@@ -10,22 +10,43 @@ public class Main {
         boolean continuar = true;
 
         while (continuar) {
+            boolean esAdmin = sistema.esAdministradorLogueado();
+
             System.out.println("\nSistema de Usuarios");
-            System.out.println("1. Login");
-            System.out.println("2. Registrarse");
-            System.out.println("3. Listar usuarios");
-            System.out.println("4. Buscar usuario");
-            System.out.println("5. Salir");
+            if (esAdmin) {
+                System.out.println("1. Listar usuarios");
+                System.out.println("2. Buscar usuario");
+                System.out.println("3. Dar de alta usuario Tester");
+                System.out.println("4. Cerrar sesión");
+                System.out.println("5. Salir");
+            } else {
+                System.out.println("1. Login");
+                System.out.println("2. Registrar usuario administrador");
+                System.out.println("3. Salir");
+            }
             System.out.print("Opción: ");
             String opcion = scan.nextLine();
 
-            switch (opcion) {
-                case "1" -> sistema.login(scan);
-                case "2" -> sistema.registrarUsuario(scan);
-                case "3" -> sistema.listarUsuarios();
-                case "4" -> sistema.buscarUsuario(scan);
-                case "5" -> continuar = false;
-                default  -> System.out.println("Opción no válida.");
+            try {
+                if (esAdmin) {
+                    switch (opcion) {
+                        case "1" -> sistema.listarUsuarios();
+                        case "2" -> sistema.buscarUsuario(scan);
+                        case "3" -> sistema.altaUsuarioTester(scan);
+                        case "4" -> sistema.cerrarSesion();
+                        case "5" -> continuar = false;
+                        default  -> System.out.println("Opción no válida.");
+                    }
+                } else {
+                    switch (opcion) {
+                        case "1" -> sistema.login(scan);
+                        case "2" -> sistema.registrarAdministrador(scan);
+                        case "3" -> continuar = false;
+                        default  -> System.out.println("Opción no válida.");
+                    }
+                }
+            } catch (Exception e) {
+                System.out.println("Ocurrió un error inesperado: " + e.getMessage());
             }
         }
 

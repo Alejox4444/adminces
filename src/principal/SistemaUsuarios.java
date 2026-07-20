@@ -6,7 +6,11 @@ import java.util.Scanner;
 
 public class SistemaUsuarios {
 
+    private String PATRON_EMAIL = "^[\\w.+-]+@[\\w-]+\\.[a-zA-Z]{2,}$";
+    private int LONGITUD_MINIMA_CONTRASENA = 5;
+
     private List<Usuario> usuarios = new ArrayList<>();
+    private Usuario usuarioActual;
 
     public SistemaUsuarios() {
         usuarios.add(new Administrador("Yanis", "Correa", "Uruguay",
@@ -28,87 +32,129 @@ public class SistemaUsuarios {
         return false;
     }
 
-    public Usuario buscarPorEmail(String email) {
+    public Usuario buscarPorEmail(String email) throws UsuarioNoEncontradoException {
         for (Usuario u : usuarios) {
             if (u.getEmail().equalsIgnoreCase(email)) {
                 return u;
             }
         }
-        return usuarios.get(0);
-    }
-
-    public boolean validarCredenciales(String email, String contrasena) {
-        if (!existeEmail(email)) {
-            return false;
-        }
-        Usuario u = buscarPorEmail(email);
-        return u.getContrasena().equals(contrasena);
+        throw new UsuarioNoEncontradoException("No existe un usuario con el email: " + email);
     }
 
     public void login(Scanner scan) {
-        System.out.print("Ingrese email: ");
-        String emailIngresado = scan.nextLine();
+        String emailIngresado = leerCampoObligatorio(scan, "Ingrese email: ", "email");
+        String contrasenaIngresada = leerCampoObligatorio(scan, "Ingrese contraseña: ", "contraseña");
 
-        System.out.print("Ingrese contraseña: ");
-        String contrasenaIngresada = scan.nextLine();
-
-        if (validarCredenciales(emailIngresado, contrasenaIngresada)) {
-            System.out.println("Login exitoso");
-        } else {
+        try {
+            Usuario u = buscarPorEmail(emailIngresado);
+            if (!u.getContrasena().equals(contrasenaIngresada) || !(u instanceof Administrador)) {
+                System.out.println("Email o contraseña incorrectos.");
+            } else {
+                usuarioActual = u;
+                System.out.println("Login exitoso. Bienvenido/a " + u.getNombre() + " (" + u.getTipo() + ")");
+            }
+        } catch (UsuarioNoEncontradoException e) {
             System.out.println("Email o contraseña incorrectos.");
         }
     }
 
-    public void registrarUsuario(Scanner scan) {
-        System.out.print("Ingrese nombre: ");
-        String nombre = scan.nextLine();
+    public boolean esAdministradorLogueado() {
+        return usuarioActual instanceof Administrador;
+    }
 
-        System.out.print("Ingrese apellido: ");
-        String apellido = scan.nextLine();
+    public void cerrarSesion() {
+        usuarioActual = null;
+        System.out.println("Sesión cerrada.");
+    }
 
-        System.out.print("Ingrese país de nacimiento: ");
-        String pais = scan.nextLine();
+    private String leerCampoObligatorio(Scanner scan, String etiqueta, String nombreCampo) {
+        while (true) {
+            System.out.print(etiqueta);
+            String valor = scan.nextLine();
+            try {
+                validarCampoObligatorio(valor, nombreCampo);
+                return valor;
+            } catch (DatosInvalidosException e) {
+                System.out.println("Error: " + e.getMessage());
+            }
+        }
+    }
 
-        System.out.print("Ingrese email: ");
-        String email = scan.nextLine();
-
-        if (existeEmail(email)) {
-            System.out.println("Ya existe un usuario con ese email.");
+    public void registrarAdministrador(Scanner scan) {
+        String[] datos = leerDatosRegistro(scan);
+        if (datos == null) {
             return;
         }
+        usuarios.add(new Administrador(datos[0], datos[1], datos[2], datos[3], datos[4]));
+        System.out.println("Administrador registrado exitosamente");
+    }
 
-        System.out.print("Ingrese contraseña: ");
-        String contrasena = scan.nextLine();
+    public void altaUsuarioTester(Scanner scan) {
+        String[] datos = leerDatosRegistro(scan);
+        if (datos == null) {
+            return;
+        }
+        String nivelTester = elegirNivelTester(scan);
+        usuarios.add(new Tester(datos[0], datos[1], datos[2], datos[3], datos[4], nivelTester));
+        System.out.println("Tester registrado exitosamente");
+    }
+
+    private String[] leerDatosRegistro(Scanner scan) {
+        String nombre = leerCampoObligatorio(scan, "Ingrese nombre: ", "nombre");
+        String apellido = leerCampoObligatorio(scan, "Ingrese apellido: ", "apellido");
+        String pais = leerCampoObligatorio(scan, "Ingrese país de nacimiento: ", "país de nacimiento");
+        String email = leerEmailParaRegistro(scan);
+        String contrasena = leerContrasenaParaRegistro(scan);
 
         System.out.print("Repita la contraseña: ");
         String contrasena2 = scan.nextLine();
 
         if (!contrasena.equals(contrasena2)) {
             System.out.println("Las contraseñas no coinciden.");
-            return;
+            return null;
         }
 
-        boolean usuarioValido = true;
+        return new String[]{nombre, apellido, pais, email, contrasena};
+    }
 
-        while (usuarioValido) {
-            System.out.print("Tipo de usuario (1 = Administrador, 2 = Tester): ");
-            String tipo = scan.nextLine();
-
-            switch (tipo) {
-                case "1" -> {
-                    usuarios.add(new Administrador(nombre, apellido, pais, email, contrasena));
-                    usuarioValido = false;
-                }
-                case "2" -> {
-                    String nivelTester = elegirNivelTester(scan);
-                    usuarios.add(new Tester(nombre, apellido, pais, email, contrasena, nivelTester));
-                    usuarioValido = false;
-                }
-                default -> System.out.println("Opción no válida, intente nuevamente.");
+    private String leerEmailParaRegistro(Scanner scan) {
+        while (true) {
+            String email = leerCampoObligatorio(scan, "Ingrese email: ", "email");
+            if (!email.matches(PATRON_EMAIL)) {
+                System.out.println("Error: el email no tiene un formato válido.");
+                continue;
+            }
+            try {
+                validarEmailNoDuplicado(email);
+                return email;
+            } catch (EmailDuplicadoException e) {
+                System.out.println("Error: " + e.getMessage());
             }
         }
+    }
 
-        System.out.println("Usuario registrado exitosamente");
+    private void validarEmailNoDuplicado(String email) throws EmailDuplicadoException {
+        if (existeEmail(email)) {
+            throw new EmailDuplicadoException("Ya existe un usuario con ese email.");
+        }
+    }
+
+    private String leerContrasenaParaRegistro(Scanner scan) {
+        while (true) {
+            String contrasena = leerCampoObligatorio(scan, "Ingrese contraseña: ", "contraseña");
+            if (contrasena.length() < LONGITUD_MINIMA_CONTRASENA) {
+                System.out.println("Error: la contraseña debe tener al menos "
+                        + LONGITUD_MINIMA_CONTRASENA + " caracteres.");
+                continue;
+            }
+            return contrasena;
+        }
+    }
+
+    private void validarCampoObligatorio(String valor, String nombreCampo) throws DatosInvalidosException {
+        if (valor == null || valor.trim().isEmpty()) {
+            throw new DatosInvalidosException("El campo '" + nombreCampo + "' no puede estar vacío.");
+        }
     }
 
     private String elegirNivelTester(Scanner scan) {
@@ -133,6 +179,11 @@ public class SistemaUsuarios {
     }
 
     public void listarUsuarios() {
+        if (!esAdministradorLogueado()) {
+            System.out.println("Error: debe iniciar sesión como Administrador para listar usuarios.");
+            return;
+        }
+
         System.out.println("\nUsuarios registrados:");
         if (usuarios.isEmpty()) {
             System.out.println("No hay usuarios registrados.");
@@ -144,16 +195,21 @@ public class SistemaUsuarios {
     }
 
     public void buscarUsuario(Scanner scan) {
+        if (!esAdministradorLogueado()) {
+            System.out.println("Error: debe iniciar sesión como Administrador para buscar usuarios.");
+            return;
+        }
+
         System.out.print("Ingrese el email del usuario a buscar: ");
         String email = scan.nextLine();
 
-        if (!existeEmail(email)) {
-            System.out.println("No se encontró ningún usuario con ese email.");
-        } else {
+        try {
             Usuario u = buscarPorEmail(email);
             System.out.println("\nUsuario encontrado:");
             System.out.println(u.mostrarInfo());
             System.out.println("País de nacimiento: " + u.getPaisDeNacimiento());
+        } catch (UsuarioNoEncontradoException e) {
+            System.out.println("Error: " + e.getMessage());
         }
     }
 }
